@@ -1,101 +1,268 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Timer Fake Video</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronômetro PiP</title>
     <style>
         body {
-            background-color: #000;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
             margin: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .timer {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            color: #333;
+        }
+        
+        .controls {
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            gap: 1rem;
+            margin-top: 1rem;
         }
-
-        .video-container {
-            background-color: #222;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .timer {
-            font-size: 3em;
-            color: #fff;
-            margin-bottom: 20px;
-        }
-
-        .controls button {
-            background-color: #4CAF50;
+        
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
             border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
             border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
-
-        .controls button.pause {
+        
+        #playPause {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #playPause:hover {
+            background-color: #45a049;
+        }
+        
+        #reset {
             background-color: #f44336;
+            color: white;
+        }
+        
+        #reset:hover {
+            background-color: #d32f2f;
+        }
+        
+        #pipButton {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        #pipButton:hover {
+            background-color: #0b7dda;
+        }
+        
+        /* Vídeo oculto para o PiP */
+        #pipVideo {
+            display: none;
+        }
+        
+        /* Estilo para o PiP */
+        .pip-window {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <div id="timer" class="timer">00:00:00</div>
+    <div class="container">
+        <h1>Cronômetro PiP</h1>
+        <div class="timer" id="timer">00:00:00</div>
         <div class="controls">
-            <button id="playPause" class="play">Play</button>
+            <button id="playPause">Iniciar</button>
+            <button id="reset">Resetar</button>
+            <button id="pipButton">Ativar PiP</button>
+        </div>
+    </div>
+
+    <!-- Vídeo oculto para ativar o PiP -->
+    <video id="pipVideo" muted playsinline></video>
+    
+    <!-- Fallback para navegadores sem suporte a PiP -->
+    <div class="pip-window" id="pipWindow">
+        <div class="timer" id="pipTimer">00:00:00</div>
+        <div class="controls">
+            <button id="pipClose">Fechar</button>
         </div>
     </div>
 
     <script>
-        let timerDisplay = document.getElementById('timer');
-        let playPauseButton = document.getElementById('playPause');
-        let seconds = 0;
-        let minutes = 0;
+        // Variáveis do cronômetro
         let hours = 0;
-        let interval;
-
+        let minutes = 0;
+        let seconds = 0;
+        let timerInterval;
+        let isRunning = false;
+        
+        // Elementos DOM
+        const timerElement = document.getElementById('timer');
+        const playPauseButton = document.getElementById('playPause');
+        const resetButton = document.getElementById('reset');
+        const pipButton = document.getElementById('pipButton');
+        const pipVideo = document.getElementById('pipVideo');
+        const pipWindow = document.getElementById('pipWindow');
+        const pipTimer = document.getElementById('pipTimer');
+        const pipClose = document.getElementById('pipClose');
+        
+        // Verifica se a API Picture-in-Picture é suportada
+        const pipSupported = 'pictureInPictureEnabled' in document;
+        
+        // Atualiza o display do timer
+        function updateTimerDisplay() {
+            const formattedHours = hours.toString().padStart(2, '0');
+            const formattedMinutes = minutes.toString().padStart(2, '0');
+            const formattedSeconds = seconds.toString().padStart(2, '0');
+            
+            const timeString = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+            timerElement.textContent = timeString;
+            pipTimer.textContent = timeString;
+        }
+        
+        // Atualiza o timer
         function updateTimer() {
             seconds++;
+            
             if (seconds === 60) {
                 seconds = 0;
                 minutes++;
-                if (minutes === 60) {
-                    minutes = 0;
-                    hours++;
-                }
             }
-
-            let formattedHours = hours < 10 ? '0' + hours : hours;
-            let formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
-            let formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
-
-            timerDisplay.textContent = formattedHours + ':' + formattedMinutes + ':' + formattedSeconds;
+            
+            if (minutes === 60) {
+                minutes = 0;
+                hours++;
+            }
+            
+            updateTimerDisplay();
         }
-
-        function startTimer() {
-            interval = setInterval(updateTimer, 1000);
-            playPauseButton.textContent = 'Pause';
-            playPauseButton.classList.add('pause');
-        }
-
-        function pauseTimer() {
-            clearInterval(interval);
-            playPauseButton.textContent = 'Play';
-            playPauseButton.classList.remove('pause');
-        }
-
-        playPauseButton.addEventListener('click', function() {
-            if (interval) {
-                pauseTimer();
+        
+        // Inicia ou pausa o cronômetro
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                playPauseButton.textContent = 'Iniciar';
+                isRunning = false;
             } else {
-                startTimer();
+                timerInterval = setInterval(updateTimer, 1000);
+                playPauseButton.textContent = 'Pausar';
+                isRunning = true;
             }
+        }
+        
+        // Reseta o cronômetro
+        function resetTimer() {
+            clearInterval(timerInterval);
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            updateTimerDisplay();
+            playPauseButton.textContent = 'Iniciar';
+            isRunning = false;
+        }
+        
+        // Ativa o modo Picture-in-Picture
+        async function togglePiP() {
+            if (pipSupported) {
+                try {
+                    // Cria um canvas com o timer para transformar em vídeo
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 300;
+                    canvas.height = 100;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Atualiza o canvas continuamente
+                    function updateCanvas() {
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = 'black';
+                        ctx.font = 'bold 36px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(timerElement.textContent, canvas.width/2, canvas.height/2 + 10);
+                        
+                        if (document.pictureInPictureElement !== pipVideo) {
+                            requestAnimationFrame(updateCanvas);
+                        }
+                    }
+                    
+                    // Cria stream do canvas
+                    const stream = canvas.captureStream();
+                    pipVideo.srcObject = stream;
+                    
+                    // Ativa PiP
+                    if (document.pictureInPictureElement === pipVideo) {
+                        await document.exitPictureInPicture();
+                        pipButton.textContent = 'Ativar PiP';
+                    } else {
+                        await pipVideo.play(); // Necessário para ativar PiP
+                        await pipVideo.requestPictureInPicture();
+                        pipButton.textContent = 'Sair do PiP';
+                        updateCanvas();
+                    }
+                } catch (error) {
+                    console.error('Erro PiP:', error);
+                    // Fallback para PiP personalizado
+                    toggleCustomPiP();
+                }
+            } else {
+                // Fallback para PiP personalizado
+                toggleCustomPiP();
+            }
+        }
+        
+        // PiP personalizado para navegadores sem suporte
+        function toggleCustomPiP() {
+            if (pipWindow.style.display === 'block') {
+                pipWindow.style.display = 'none';
+                pipButton.textContent = 'Ativar PiP';
+            } else {
+                pipWindow.style.display = 'block';
+                pipButton.textContent = 'Sair do PiP';
+            }
+        }
+        
+        // Event listeners
+        playPauseButton.addEventListener('click', toggleTimer);
+        resetButton.addEventListener('click', resetTimer);
+        pipButton.addEventListener('click', togglePiP);
+        pipClose.addEventListener('click', toggleCustomPiP);
+        
+        // Atualiza o PiP quando o timer muda
+        pipVideo.addEventListener('enterpictureinpicture', () => {
+            pipButton.textContent = 'Sair do PiP';
+        });
+        
+        pipVideo.addEventListener('leavepictureinpicture', () => {
+            pipButton.textContent = 'Ativar PiP';
         });
     </script>
 </body>
