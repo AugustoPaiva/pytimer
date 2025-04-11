@@ -1,268 +1,485 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cronômetro PiP</title>
+    <title>Controle de Estudos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
     <style>
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #left-panel {
+            flex: 1;
+        }
+        #video-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin-bottom: 20px;
+            max-width: 325px; /* Largura máxima de 325px */
+        }
+        #my-video {
+            width: 237px;
+            height: 133px;
+            cursor: default;
+        }
+        .btn-group button {
+            padding: 10px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background-color: #3498db;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        /* .btn-group button:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-group button:active {
+            background-color: #1c5980;
+        } */
+
+        #play-pause-btn {
+            background-color: rgba(105,189,151,255);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        #play-pause-btn:hover {
+            background-color: #4ab388;
+        }
+
+        #play-pause-btn:active {
+            transform: scale(0.98);
+            background-color: #3d9c75;
+        }
+
+        .btn-group button#stop-btn {
+            background-color: rgba(225,101,95,255);
+        }
+
+        .btn-group button#stop-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-group {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #log-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 325px; /* Adicionando largura máxima para respeitar o pai */
+            max-height: 200px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        #estudos-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            max-width: 325px; /* Adicionando largura máxima para respeitar o pai */
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
             justify-content: center;
-            height: 100vh;
-            margin: 0;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .tempo-total {
+            color: #2c3e50;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        /* Estilos para a matriz */
+        
+        #time-matrix {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #time-matrix td {
+            width: 20px; /* Largura dos quadrados para 20px */
+            height: 20px; /* Altura dos quadrados para 20px */
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 8px;
+            padding: 0;
+        }
+        #time-matrix tr:first-child td {
+            font-weight: bold;
             background-color: #f5f5f5;
         }
-        
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-        
-        .timer {
-            font-size: 3rem;
+        .hour-label {
             font-weight: bold;
-            margin: 1rem 0;
-            color: #333;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        button {
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        #playPause {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        #playPause:hover {
-            background-color: #45a049;
-        }
-        
-        #reset {
-            background-color: #f44336;
-            color: white;
-        }
-        
-        #reset:hover {
-            background-color: #d32f2f;
-        }
-        
-        #pipButton {
-            background-color: #2196F3;
-            color: white;
-        }
-        
-        #pipButton:hover {
-            background-color: #0b7dda;
-        }
-        
-        /* Vídeo oculto para o PiP */
-        #pipVideo {
-            display: none;
-        }
-        
-        /* Estilo para o PiP */
-        .pip-window {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            z-index: 10000;
-            display: none;
+            text-align: right;
+            padding-right: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Cronômetro PiP</h1>
-        <div class="timer" id="timer">00:00:00</div>
-        <div class="controls">
-            <button id="playPause">Iniciar</button>
-            <button id="reset">Resetar</button>
-            <button id="pipButton">Ativar PiP</button>
+        <div id="left-panel">
+            <div id="video-container">
+                <video id="my-video">
+                    <source src="videoplayback.mp4" type="video/mp4">
+                    Seu navegador não suporta vídeos.
+                </video>
+                <div class="btn-group">
+                    <button id="play-pause-btn">Play</button>
+                    <button id="stop-btn">Stop</button>
+                </div>
+                <div id="log-container">
+                    <strong>Intervalos registrados:</strong>
+                    <div id="interval-log"></div>
+                </div>
+                <div id="estudos-container">
+                    <strong>Estudos registrados:</strong>
+                    <div id="estudos-log"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="right-panel">
+            <h3 id="timeline-title">Linha do Tempo de Estudos</h3>
+            <table id="time-matrix"></table>
         </div>
     </div>
 
-    <!-- Vídeo oculto para ativar o PiP -->
-    <video id="pipVideo" muted playsinline></video>
-    
-    <!-- Fallback para navegadores sem suporte a PiP -->
-    <div class="pip-window" id="pipWindow">
-        <div class="timer" id="pipTimer">00:00:00</div>
-        <div class="controls">
-            <button id="pipClose">Fechar</button>
+    <div id="materia-modal" class="modal">
+        <div class="modal-content">
+            <h3>Qual matéria você está estudando?</h3>
+            <input type="text" id="materia-input" placeholder="Ex: Matemática, Física...">
+            <button id="confirmar-btn">Confirmar</button>
         </div>
     </div>
 
     <script>
-        // Variáveis do cronômetro
-        let hours = 0;
-        let minutes = 0;
-        let seconds = 0;
-        let timerInterval;
-        let isRunning = false;
-        
-        // Elementos DOM
-        const timerElement = document.getElementById('timer');
-        const playPauseButton = document.getElementById('playPause');
-        const resetButton = document.getElementById('reset');
-        const pipButton = document.getElementById('pipButton');
-        const pipVideo = document.getElementById('pipVideo');
-        const pipWindow = document.getElementById('pipWindow');
-        const pipTimer = document.getElementById('pipTimer');
-        const pipClose = document.getElementById('pipClose');
-        
-        // Verifica se a API Picture-in-Picture é suportada
-        const pipSupported = 'pictureInPictureEnabled' in document;
-        
-        // Atualiza o display do timer
-        function updateTimerDisplay() {
-            const formattedHours = hours.toString().padStart(2, '0');
-            const formattedMinutes = minutes.toString().padStart(2, '0');
-            const formattedSeconds = seconds.toString().padStart(2, '0');
-            
-            const timeString = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
-            timerElement.textContent = timeString;
-            pipTimer.textContent = timeString;
-        }
-        
-        // Atualiza o timer
-        function updateTimer() {
-            seconds++;
-            
-            if (seconds === 60) {
-                seconds = 0;
-                minutes++;
+        const video = document.getElementById('my-video');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const intervalLog = document.getElementById('interval-log');
+        const estudosLog = document.getElementById('estudos-log');
+        const materiaModal = document.getElementById('materia-modal');
+        const materiaInput = document.getElementById('materia-input');
+        const confirmarBtn = document.getElementById('confirmar-btn');
+        const timeMatrix = document.getElementById('time-matrix');
+        const timelineTitle = document.getElementById('timeline-title');
+
+        let intervals = [];
+        let estudos = [];
+        let startTime = null;
+        let currentTema = null;
+        const studyColors = {};
+
+        // Cores aleatórias para cada matéria
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
             }
-            
-            if (minutes === 60) {
-                minutes = 0;
-                hours++;
+            return color;
+        }
+
+        // Função para formatar a data no formato desejado
+        function formatDateToTitle() {
+            const now = new Date();
+            const day = now.getDate().toString().padStart(2, '0');
+            const month = (now.getMonth() + 1).toString().padStart(2, '0'); // getMonth() retorna de 0 a 11
+            const year = now.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Inicializa a matriz de tempo
+        function initializeTimeMatrix() {
+            // Cria cabeçalho com números de 1 a 6 (representando blocos de 10 minutos)
+            // let headerRow = document.createElement('tr');
+            // let emptyCell = document.createElement('td');
+            // headerRow.appendChild(emptyCell);
+
+            // for (let i = 1; i <= 6; i++) {
+            //     let th = document.createElement('td');
+            //     th.textContent = i;
+            //     headerRow.appendChild(th);
+            // }
+
+            // timeMatrix.appendChild(headerRow);
+
+            // Cria linhas para cada hora (5-24 e depois 1-4)
+            const hoursOrder = [...Array(20).keys()].map(i => i + 5).concat([...Array(4).keys()].map(i => i + 1));
+
+            for (let hour of hoursOrder) {
+                let row = document.createElement('tr');
+                let hourCell = document.createElement('td');
+                hourCell.textContent = hour;
+                hourCell.className = 'hour-label';
+                row.appendChild(hourCell);
+
+                for (let i = 1; i <= 6; i++) {
+                    let cell = document.createElement('td');
+                    cell.dataset.hour = hour;
+                    cell.dataset.block = i;
+                    row.appendChild(cell);
+                }
+
+                timeMatrix.appendChild(row);
             }
-            
-            updateTimerDisplay();
+
+            // Define o texto da linha do tempo com a data atual
+            timelineTitle.textContent = formatDateToTitle();
         }
-        
-        // Inicia ou pausa o cronômetro
-        function toggleTimer() {
-            if (isRunning) {
-                clearInterval(timerInterval);
-                playPauseButton.textContent = 'Iniciar';
-                isRunning = false;
-            } else {
-                timerInterval = setInterval(updateTimer, 1000);
-                playPauseButton.textContent = 'Pausar';
-                isRunning = true;
-            }
-        }
-        
-        // Reseta o cronômetro
-        function resetTimer() {
-            clearInterval(timerInterval);
-            hours = 0;
-            minutes = 0;
-            seconds = 0;
-            updateTimerDisplay();
-            playPauseButton.textContent = 'Iniciar';
-            isRunning = false;
-        }
-        
-        // Ativa o modo Picture-in-Picture
-        async function togglePiP() {
-            if (pipSupported) {
-                try {
-                    // Cria um canvas com o timer para transformar em vídeo
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 300;
-                    canvas.height = 100;
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Atualiza o canvas continuamente
-                    function updateCanvas() {
-                        ctx.fillStyle = 'white';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        ctx.fillStyle = 'black';
-                        ctx.font = 'bold 36px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(timerElement.textContent, canvas.width/2, canvas.height/2 + 10);
-                        
-                        if (document.pictureInPictureElement !== pipVideo) {
-                            requestAnimationFrame(updateCanvas);
+
+        // Pinta os blocos de tempo na matriz - VERSÃO CORRIGIDA
+        function paintStudyTimes() {
+            // Limpa cores anteriores
+            const cells = timeMatrix.querySelectorAll('td[data-hour]');
+            cells.forEach(cell => {
+                cell.style.backgroundColor = '';
+                cell.title = '';
+            });
+
+            // Para cada estudo, pinta os blocos correspondentes
+            estudos.forEach(estudo => {
+                if (!studyColors[estudo.tema]) {
+                    studyColors[estudo.tema] = getRandomColor();
+                }
+                const color = studyColors[estudo.tema];
+
+                estudo.tempos.forEach(intervalo => {
+                    const start = intervalo.entrada;
+                    const end = intervalo.saida;
+
+                    // Converte para horas e minutos
+                    const startHour = start.getHours();
+                    const startMinutes = start.getMinutes();
+                    const endHour = end.getHours();
+                    const endMinutes = end.getMinutes();
+
+                    // Calcula os blocos de 10 minutos CORRETAMENTE
+                    const startBlock = Math.floor(startMinutes / 10) + 1;
+                    let endBlock = Math.floor((endMinutes - 1) / 10) + 1;
+
+                    // Ajusta para o caso de terminar exatamente no início de um novo bloco
+                    if (endMinutes % 10 === 0 && end.getSeconds() === 0) {
+                        endBlock -= 1;
+                    }
+
+                    // Pinta os blocos
+                    if (startHour === endHour) {
+                        // Intervalo dentro da mesma hora
+                        if (startBlock <= endBlock) { // Só pinta se durar pelo menos 1 minuto no bloco
+                            for (let block = startBlock; block <= Math.min(endBlock, 6); block++) {
+                                const cell = timeMatrix.querySelector(`td[data-hour="${startHour}"][data-block="${block}"]`);
+                                if (cell) {
+                                    cell.style.backgroundColor = color;
+                                    cell.title = `${estudo.tema}: ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}`;
+                                }
+                            }
+                        }
+                    } else {
+                        // Intervalo que cruza horas
+                        // Primeira hora (da startBlock até o final)
+                        for (let block = startBlock; block <= 6; block++) {
+                            const cell = timeMatrix.querySelector(`td[data-hour="${startHour}"][data-block="${block}"]`);
+                            if (cell) {
+                                cell.style.backgroundColor = color;
+                                cell.title = `${estudo.tema}: ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}`;
+                            }
+                        }
+
+                        // Horas intermediárias (se houver)
+                        for (let hour = startHour + 1; hour < endHour; hour++) {
+                            const actualHour = hour > 24 ? hour - 24 : hour;
+                            for (let block = 1; block <= 6; block++) {
+                                const cell = timeMatrix.querySelector(`td[data-hour="${actualHour}"][data-block="${block}"]`);
+                                if (cell) {
+                                    cell.style.backgroundColor = color;
+                                    cell.title = `${estudo.tema}: ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}`;
+                                }
+                            }
+                        }
+
+                        // Última hora (do início até endBlock)
+                        if (endBlock >= 1) { // Só pinta se durar pelo menos 1 minuto no bloco
+                            for (let block = 1; block <= Math.min(endBlock, 6); block++) {
+                                const cell = timeMatrix.querySelector(`td[data-hour="${endHour}"][data-block="${block}"]`);
+                                if (cell) {
+                                    cell.style.backgroundColor = color;
+                                    cell.title = `${estudo.tema}: ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}`;
+                                }
+                            }
                         }
                     }
-                    
-                    // Cria stream do canvas
-                    const stream = canvas.captureStream();
-                    pipVideo.srcObject = stream;
-                    
-                    // Ativa PiP
-                    if (document.pictureInPictureElement === pipVideo) {
-                        await document.exitPictureInPicture();
-                        pipButton.textContent = 'Ativar PiP';
-                    } else {
-                        await pipVideo.play(); // Necessário para ativar PiP
-                        await pipVideo.requestPictureInPicture();
-                        pipButton.textContent = 'Sair do PiP';
-                        updateCanvas();
-                    }
-                } catch (error) {
-                    console.error('Erro PiP:', error);
-                    // Fallback para PiP personalizado
-                    toggleCustomPiP();
+                });
+            });
+        }
+
+        video.controls = false;
+
+        function formatDateTime(date) {
+            return date.toLocaleString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function calculateTotalTime(intervals) {
+            return intervals.reduce((total, interval) => {
+                return total + (interval.saida - interval.entrada);
+            }, 0);
+        }
+
+        function pauseAndRecord() {
+            if (startTime) {
+                const endTime = new Date();
+                intervals.push({
+                    entrada: startTime,
+                    saida: endTime
+                });
+                updateLogs();
+                paintStudyTimes();
+                startTime = null;
+            }
+            playPauseBtn.textContent = 'Play';
+        }
+
+        function saveEstudo() {
+            if (intervals.length > 0 && currentTema) {
+                estudos.push({
+                    tema: currentTema,
+                    tempos: [...intervals]
+                });
+                intervals = [];
+                currentTema = null;
+                updateLogs();
+                paintStudyTimes();
+            }
+        }
+
+        function updateLogs() {
+            intervalLog.innerHTML = intervals.map((interval, index) =>
+                `${index + 1}. Entrada: ${formatDateTime(interval.entrada)} | Saída: ${formatDateTime(interval.saida)}`
+            ).join('<br>');
+
+            estudosLog.innerHTML = estudos.map((estudo, index) => {
+                const totalTime = calculateTotalTime(estudo.tempos);
+                return `<div><strong>${index + 1}. ${estudo.tema}:</strong> <span class="tempo-total">(${formatTime(totalTime)})</span><br>${
+                    estudo.tempos.map((tempo, i) =>
+                        `&nbsp;&nbsp;${i + 1}. ${formatDateTime(tempo.entrada)} → ${formatDateTime(tempo.saida)}`
+                    ).join('<br>')
+                }</div><br>`;
+            }).join('');
+        }
+
+        function showMateriaPopup() {
+            materiaModal.style.display = 'flex';
+            materiaInput.focus();
+        }
+
+        playPauseBtn.addEventListener('click', function() {
+            if (video.paused) {
+                if (intervals.length === 0 && !currentTema) {
+                    showMateriaPopup();
+                    return;
                 }
+                video.play();
+                playPauseBtn.textContent = 'Pause';
+                startTime = new Date();
             } else {
-                // Fallback para PiP personalizado
-                toggleCustomPiP();
+                video.pause();
             }
-        }
-        
-        // PiP personalizado para navegadores sem suporte
-        function toggleCustomPiP() {
-            if (pipWindow.style.display === 'block') {
-                pipWindow.style.display = 'none';
-                pipButton.textContent = 'Ativar PiP';
-            } else {
-                pipWindow.style.display = 'block';
-                pipButton.textContent = 'Sair do PiP';
-            }
-        }
-        
-        // Event listeners
-        playPauseButton.addEventListener('click', toggleTimer);
-        resetButton.addEventListener('click', resetTimer);
-        pipButton.addEventListener('click', togglePiP);
-        pipClose.addEventListener('click', toggleCustomPiP);
-        
-        // Atualiza o PiP quando o timer muda
-        pipVideo.addEventListener('enterpictureinpicture', () => {
-            pipButton.textContent = 'Sair do PiP';
         });
-        
-        pipVideo.addEventListener('leavepictureinpicture', () => {
-            pipButton.textContent = 'Ativar PiP';
+
+        stopBtn.addEventListener('click', function() {
+            if (!video.paused) {
+                video.pause();
+            }
+            pauseAndRecord();
+            saveEstudo();
+            video.currentTime = 0;
+            intervalLog.innerHTML += '<br><strong>Feche a janela Picture-in-Picture manualmente.</strong>';
+        });
+
+        confirmarBtn.addEventListener('click', function() {
+            currentTema = materiaInput.value.trim();
+            if (currentTema) {
+                materiaModal.style.display = 'none';
+                materiaInput.value = '';
+                video.play();
+                playPauseBtn.textContent = 'Pause';
+                startTime = new Date();
+            }
+        });
+
+        video.addEventListener('pause', pauseAndRecord);
+
+        video.addEventListener('play', function() {
+            playPauseBtn.textContent = 'Pause';
+            if (!startTime) {
+                startTime = new Date();
+            }
+        });
+
+        video.addEventListener('click', function(event) {
+            event.preventDefault();
+        });
+
+        // Inicializa a matriz quando a página carrega
+        window.addEventListener('load', function() {
+            initializeTimeMatrix();
+            if (estudos.length > 0) {
+                paintStudyTimes();
+            }
         });
     </script>
 </body>
